@@ -1,0 +1,15 @@
+// Axis Objective Descriptions
+axis_desc_obj1 "Primary Objective: Break into the club's safe"
+axis_desc_obj2 "Secondary Objective: Capture the main stage"
+axis_desc_obj3 "Secondary Objective: Secure the VIP lounge"
+axis_desc_obj4 "Secondary Objective: Construct side entrance"
+axis_desc_obj5 "Secondary Objective: Establish Command Post"
+axis_desc_obj6 "Secondary Objective: Prevent Allied Command Post"
+
+// Allied Objective Descriptions
+allied_desc_obj1 "Primary Objective: Defend the safe"
+allied_desc_obj2 "Secondary Objective: Defend the main stage"
+allied_desc_obj3 "Secondary Objective: Protect the VIP lounge"
+allied_desc_obj4 "Secondary Objective: Prevent construction of side entrance"
+allied_desc_obj5 "Secondary Objective: Establish Command Post"
+allied_desc_obj6 "Secondary Objective: Prevent Axis Command Post"

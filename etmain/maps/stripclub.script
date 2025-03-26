@@ -1,0 +1,407 @@
+//
+// Map: Adult Entertainment Club
+// BSP: stripclub
+
+game_manager
+{
+    spawn
+    {
+        // Game rules
+        wm_axis_respawntime    30
+        wm_allied_respawntime  20
+        wm_number_of_objectives 6
+        wm_set_round_timelimit  20
+        
+        // Objectives
+        
+        // Primary:
+        // 1: Crack the safe / Defend the safe
+        // Secondary:
+        // 2: Capture Main Stage / Defend Main Stage
+        // 3: Secure VIP Lounge / Protect VIP Lounge
+        // 4: Construct Side Entrance / Prevent Side Entrance
+        // 5: Allied command post
+        // 6: Axis command post
+        
+        wm_objective_status 1 0 0 // <objective team status>
+        wm_objective_status 1 1 0 // status: 0 = default
+        wm_objective_status 2 0 0 //         1 = succeeded
+        wm_objective_status 2 1 0 //         2 = failed
+        wm_objective_status 3 0 0
+        wm_objective_status 3 1 0
+        wm_objective_status 4 0 0
+        wm_objective_status 4 1 0
+        wm_objective_status 5 0 0
+        wm_objective_status 5 1 0
+        wm_objective_status 6 0 0
+        wm_objective_status 6 1 0
+        
+        wait 100
+        setautospawn    "Backstage"  1
+        setautospawn    "Parking Lot"  0
+        
+        // Stopwatch mode defending team (0=Axis, 1=Allies)
+        wm_set_defending_team    1
+        
+        // If the round timer expires, the Allies have won
+        wm_setwinner 1
+    }
+    
+    // Safe cracked (primary objective)
+    trigger safe_cracked
+    {
+        // Set objective status
+        wm_objective_status 1 0 1 // Axis completed objective
+        wm_objective_status 1 1 2 // Allies failed objective
+        
+        // Announce to players
+        wm_announce "The safe has been cracked!"
+        
+        // End the round with Axis as winners
+        wm_endround 0
+    }
+    
+    // Main stage captured by Axis
+    trigger mainstage_flagred
+    {
+        // Set objective status
+        wm_objective_status 2 0 1 // Axis completed objective
+        wm_objective_status 2 1 2 // Allies failed objective
+        
+        // Announce to players
+        wm_announce "Axis have captured the main stage!"
+    }
+    
+    // Main stage captured by Allies
+    trigger mainstage_flagblue
+    {
+        // Set objective status
+        wm_objective_status 2 0 2 // Axis failed objective
+        wm_objective_status 2 1 1 // Allies completed objective
+        
+        // Announce to players
+        wm_announce "Allies have recaptured the main stage!"
+    }
+    
+    // VIP lounge captured by Axis
+    trigger viplounge_flagred
+    {
+        // Set objective status
+        wm_objective_status 3 0 1 // Axis completed objective
+        wm_objective_status 3 1 2 // Allies failed objective
+        
+        // Announce to players
+        wm_announce "Axis have captured the VIP lounge!"
+    }
+    
+    // VIP lounge captured by Allies
+    trigger viplounge_flagblue
+    {
+        // Set objective status
+        wm_objective_status 3 0 2 // Axis failed objective
+        wm_objective_status 3 1 1 // Allies completed objective
+        
+        // Announce to players
+        wm_announce "Allies have recaptured the VIP lounge!"
+    }
+    
+    // Side entrance constructed
+    trigger side_entrance_built
+    {
+        // Set objective status
+        wm_objective_status 4 0 1 // Axis completed objective
+        wm_objective_status 4 1 2 // Allies failed objective
+        
+        // Announce to players
+        wm_announce "Axis have constructed the side entrance!"
+    }
+}
+
+// ================================================
+// =========== SPAWN POINT CONTROLS ===============
+// ================================================
+// description          : team_wolf_objectives : spawns
+// Allies Backstage     : backstage_wobj      : backstage_spawns
+// Axis Parking Lot     : parkinglot_wobj     : parkinglot_spawns
+// VIP Lounge           : viplounge_wobj      : viplounge_spawns
+// Main Stage           : mainstage_wobj      : mainstage_spawns
+
+backstage_spawns
+{
+    spawn
+    {
+        // Initial state is visible/active for Allied spawns
+    }
+}
+
+backstage_wobj
+{
+    spawn
+    {
+        // Initial state is visible/active for Allied objective
+    }
+}
+
+parkinglot_spawns
+{
+    spawn
+    {
+        // Initial state is visible/active for Axis spawns
+    }
+}
+
+parkinglot_wobj
+{
+    spawn
+    {
+        // Initial state is visible/active for Axis objective
+    }
+}
+
+viplounge_spawns
+{
+    spawn
+    {
+        // Initially inactive until captured
+        setstate viplounge_spawns invisible
+    }
+}
+
+viplounge_wobj
+{
+    spawn
+    {
+        // Initially inactive until captured
+        setstate viplounge_wobj invisible
+    }
+}
+
+mainstage_spawns
+{
+    spawn
+    {
+        // Initially inactive until captured
+        setstate mainstage_spawns invisible
+    }
+}
+
+mainstage_wobj
+{
+    spawn
+    {
+        // Initially inactive until captured
+        setstate mainstage_wobj invisible
+    }
+}
+
+// ================================================
+// ============ OBJECTIVE TRIGGERS ===============
+// ================================================
+
+// Main Stage objective
+mainstage_flag
+{
+    spawn
+    {
+        accum 0 set 1    // Who has the flag: 0-Axis, 1-Allied
+    }
+    
+    trigger allied_capture
+    {
+        accum 0 abort_if_equal 1 // do Allies own flag?
+        
+        trigger game_manager mainstage_flagblue
+        
+        setstate mainstage_spawns default
+        setstate mainstage_wobj default
+        
+        trigger mainstage_flag setallies
+        
+        // Voice announcements
+        wm_teamvoiceannounce 0 "Axis have lost the main stage!"
+        wm_teamvoiceannounce 1 "Allies have captured the main stage!"
+    }
+    
+    trigger setallies
+    {
+        accum 0 abort_if_equal 1
+        accum 0 set 1
+        
+        alertentity mainstage_wobj
+        alertentity mainstage_spawns
+        
+        setautospawn "Main Stage" 1
+    }
+    
+    trigger axis_capture
+    {
+        accum 0 abort_if_equal 0 // do Axis own flag?
+        
+        trigger game_manager mainstage_flagred
+        
+        setstate mainstage_spawns default
+        setstate mainstage_wobj default
+        
+        trigger mainstage_flag setaxis
+        
+        // Voice announcements
+        wm_teamvoiceannounce 0 "Axis have captured the main stage!"
+        wm_teamvoiceannounce 1 "Allies have lost the main stage!"
+    }
+    
+    trigger setaxis
+    {
+        accum 0 abort_if_equal 0
+        accum 0 set 0
+        
+        alertentity mainstage_wobj
+        alertentity mainstage_spawns
+        
+        setautospawn "Main Stage" 0
+    }
+}
+
+// VIP Lounge objective
+viplounge_flag
+{
+    spawn
+    {
+        accum 0 set 1    // Who has the flag: 0-Axis, 1-Allied
+    }
+    
+    trigger allied_capture
+    {
+        accum 0 abort_if_equal 1 // do Allies own flag?
+        
+        trigger game_manager viplounge_flagblue
+        
+        setstate viplounge_spawns default
+        setstate viplounge_wobj default
+        
+        trigger viplounge_flag setallies
+        
+        // Voice announcements
+        wm_teamvoiceannounce 0 "Axis have lost the VIP lounge!"
+        wm_teamvoiceannounce 1 "Allies have captured the VIP lounge!"
+    }
+    
+    trigger setallies
+    {
+        accum 0 abort_if_equal 1
+        accum 0 set 1
+        
+        alertentity viplounge_wobj
+        alertentity viplounge_spawns
+        
+        setautospawn "VIP Lounge" 1
+    }
+    
+    trigger axis_capture
+    {
+        accum 0 abort_if_equal 0 // do Axis own flag?
+        
+        trigger game_manager viplounge_flagred
+        
+        setstate viplounge_spawns default
+        setstate viplounge_wobj default
+        
+        trigger viplounge_flag setaxis
+        
+        // Voice announcements
+        wm_teamvoiceannounce 0 "Axis have captured the VIP lounge!"
+        wm_teamvoiceannounce 1 "Allies have lost the VIP lounge!"
+    }
+    
+    trigger setaxis
+    {
+        accum 0 abort_if_equal 0
+        accum 0 set 0
+        
+        alertentity viplounge_wobj
+        alertentity viplounge_spawns
+        
+        setautospawn "VIP Lounge" 0
+    }
+}
+
+// Office Safe objective (primary objective)
+office_safe
+{
+    spawn
+    {
+        wait 50
+        constructible_class 3
+    }
+    
+    death
+    {
+        trigger game_manager safe_cracked
+        
+        // Visual effects
+        setstate safe_explosion default
+        setstate safe_smoke default
+    }
+}
+
+// Visual effects for safe cracking
+safe_explosion
+{
+    spawn
+    {
+        setstate safe_explosion invisible
+    }
+}
+
+safe_smoke
+{
+    spawn
+    {
+        setstate safe_smoke invisible
+    }
+}
+
+// Side Entrance objective
+side_entrance
+{
+    spawn
+    {
+        wait 50
+        constructible_class 2
+    }
+    
+    built
+    {
+        trigger game_manager side_entrance_built
+        
+        // Open the entrance
+        trigger side_door open
+        
+        // Voice announcements
+        wm_teamvoiceannounce 0 "Axis have constructed the side entrance!"
+        wm_teamvoiceannounce 1 "Allies have failed to prevent the side entrance construction!"
+    }
+}
+
+// Side door that opens when side entrance is constructed
+side_door
+{
+    spawn
+    {
+        wait 50
+    }
+    
+    trigger open
+    {
+        // Open the door
+        setstate side_door invisible
+        setstate side_door_open default
+    }
+}
+
+side_door_open
+{
+    spawn
+    {
+        setstate side_door_open invisible
+    }
+}
