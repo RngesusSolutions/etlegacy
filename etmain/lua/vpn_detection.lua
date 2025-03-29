@@ -9,6 +9,7 @@
 ]]
 
 -- Configuration
+local API_KEY = "b7e5e2b26f85b0f8e9324d75ddd60c00f859e9e5ab70eb5d969fa01a25bea172" -- Set API key directly in the file
 local KICK_MESSAGE = "VPN not allowed"
 local CACHE_DURATION = 3600 -- Cache results for 1 hour (in seconds)
 
@@ -19,13 +20,7 @@ local vpn_cache = {}
 function et_InitGame(levelTime, randomSeed, restart)
     et.RegisterModname("VPN Detection")
     et.G_Print("VPN Detection module loaded\n")
-    
-    -- Load API key from cvar
-    local api_key = et.trap_Cvar_Get("vpn_api_key")
-    if not api_key or api_key == "" then
-        et.G_Print("^1ERROR: vpn_api_key cvar not set. VPN detection will not work!\n")
-        et.G_Print("^1Please set vpn_api_key in your server config: set vpn_api_key \"your_api_key_here\"\n")
-    end
+    et.G_Print("VPN Detection using API key: " .. API_KEY:sub(1, 8) .. "...\n")
 end
 
 -- Function to check if an IP is a localhost address
@@ -35,23 +30,20 @@ end
 
 -- Function to make HTTP request to Scamalytics API
 local function check_vpn(ip)
-    -- Get API key from cvar
-    local api_key = et.trap_Cvar_Get("vpn_api_key")
-    if not api_key or api_key == "" then
-        et.G_Print("^1ERROR: Cannot check VPN - vpn_api_key cvar not set\n")
-        return false
-    end
-    
     -- Check cache first to avoid repeated API calls
     local current_time = os.time()
     
     -- If we have a cached result that hasn't expired
     if vpn_cache[ip] and (current_time - vpn_cache[ip].timestamp) < CACHE_DURATION then
+        et.G_Print("Using cached VPN result for IP: " .. ip .. " - is VPN: " .. (vpn_cache[ip].is_vpn and "yes" or "no") .. "\n")
         return vpn_cache[ip].is_vpn
     end
     
     -- Construct API URL
-    local url = "https://api.scamalytics.com/v2/ip/" .. ip .. "?key=" .. api_key
+    local url = "https://api.scamalytics.com/v2/ip/" .. ip .. "?key=" .. API_KEY
+    
+    et.G_Print("Making Scamalytics API call for IP: " .. ip .. "\n")
+    et.G_Print("API URL: " .. url:gsub(API_KEY, API_KEY:sub(1, 8) .. "...") .. "\n")
     
     -- Use Lua's HTTP capabilities to make the request
     local http_result = ""
@@ -60,6 +52,8 @@ local function check_vpn(ip)
         http_result = file:read("*a")
         file:close()
     end
+    
+    et.G_Print("API Response: " .. http_result .. "\n")
     
     -- Parse the JSON response
     local is_vpn = false
@@ -79,6 +73,7 @@ local function check_vpn(ip)
         timestamp = current_time
     }
     
+    et.G_Print("VPN detection result for IP " .. ip .. ": " .. (is_vpn and "VPN detected" or "No VPN detected") .. "\n")
     return is_vpn
 end
 
@@ -104,13 +99,6 @@ function et_ClientConnect(clientNum, firstTime, isBot)
     -- Skip check for localhost connections
     if is_localhost(ip) then
         et.G_Print("Client " .. clientNum .. " is connecting from localhost, skipping VPN check\n")
-        return nil
-    end
-    
-    -- Check if the API key is set
-    local api_key = et.trap_Cvar_Get("vpn_api_key")
-    if not api_key or api_key == "" then
-        et.G_Print("^1WARNING: Cannot check if client " .. clientNum .. " is using a VPN - vpn_api_key cvar not set\n")
         return nil
     end
     
