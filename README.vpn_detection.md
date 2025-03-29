@@ -17,7 +17,22 @@ This script checks if players are using VPNs when they join the server using the
    /path/to/etlegacy/etmain/lua/vpn_detection.lua
    ```
 
-2. Enable the script by adding it to your `lua_modules` cvar in your server configuration file (typically `etl_server.cfg` or `server.cfg`):
+2. Place the `vpn_checker.sh` companion script in your ET:Legacy server's `etmain` directory:
+   ```
+   /path/to/etlegacy/etmain/vpn_checker.sh
+   ```
+
+3. Make the companion script executable:
+   ```
+   chmod +x /path/to/etlegacy/etmain/vpn_checker.sh
+   ```
+
+4. Edit the `vpn_detection.lua` script to set your Scamalytics API key:
+   ```lua
+   local API_KEY = "your_api_key_here" -- Replace with your actual Scamalytics API key
+   ```
+
+5. Enable the script by adding it to your `lua_modules` cvar in your server configuration file (typically `etl_server.cfg` or `server.cfg`):
    ```
    set lua_modules "vpn_detection"
    ```
@@ -27,7 +42,12 @@ This script checks if players are using VPNs when they join the server using the
    set lua_modules "module1 module2 vpn_detection"
    ```
 
-3. Restart your ET:Legacy server for the changes to take effect.
+6. Start the companion script in the background:
+   ```
+   nohup /path/to/etlegacy/etmain/vpn_checker.sh > vpn_checker.log 2>&1 &
+   ```
+
+7. Restart your ET:Legacy server for the changes to take effect.
 
 ## Configuration
 
