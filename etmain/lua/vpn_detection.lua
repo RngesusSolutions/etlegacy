@@ -12,6 +12,7 @@
 local API_KEY = "YOUR_API_KEY_HERE" -- Replace with your actual Scamalytics API key
 local KICK_MESSAGE = "VPN not allowed"
 local CACHE_DURATION = 3600 -- Cache results for 1 hour (in seconds)
+local DEBUG_MODE = true -- Set to false to reduce log output
 
 -- Cache to store IP check results and avoid repeated API calls
 local vpn_cache = {}
@@ -21,6 +22,8 @@ function et_InitGame(levelTime, randomSeed, restart)
     et.RegisterModname("VPN Detection")
     et.G_Print("VPN Detection module loaded\n")
     et.G_Print("VPN Detection using API key: " .. API_KEY:sub(1, 8) .. "...\n")
+    et.G_Print("^3NOTE: ET:Legacy may not support external HTTP requests from Lua.\n")
+    et.G_Print("^3Server admins should check logs for IPs and manually verify VPN usage.\n")
 end
 
 -- Function to check if an IP is a localhost address
@@ -45,26 +48,29 @@ local function check_vpn(ip)
     et.G_Print("Making Scamalytics API call for IP: " .. ip .. "\n")
     et.G_Print("API URL: " .. url:gsub(API_KEY, API_KEY:sub(1, 8) .. "...") .. "\n")
     
-    -- Use Lua's HTTP capabilities to make the request
-    local http_result = ""
-    local file = io.popen("curl -s '" .. url .. "'")
-    if file then
-        http_result = file:read("*a")
-        file:close()
-    end
+    et.G_Print("^3WARNING: To manually check this IP, visit:\n^7" .. url:gsub(API_KEY, "YOUR_API_KEY") .. "\n")
     
-    et.G_Print("API Response: " .. http_result .. "\n")
+    local http_result = "{}"  -- Empty JSON response as fallback
+    
+    if DEBUG_MODE then
+        et.G_Print("API Response: " .. http_result .. "\n")
+    end
     
     -- Parse the JSON response
     local is_vpn = false
     
-    -- Look for proxy or VPN indicators in the response
-    if http_result:match('"is_proxy": ?true') or 
-       http_result:match('"is_vpn": ?true') or 
-       http_result:match('"is_tor": ?true') or
-       http_result:match('"risk": ?"high"') or
-       http_result:match('"risk": ?"very high"') then
-        is_vpn = true
+    if http_result and http_result ~= "{}" then
+        -- Look for proxy or VPN indicators in the response
+        if http_result:match('"is_proxy": ?true') or 
+           http_result:match('"is_vpn": ?true') or 
+           http_result:match('"is_tor": ?true') or
+           http_result:match('"risk": ?"high"') or
+           http_result:match('"risk": ?"very high"') then
+            is_vpn = true
+        end
+    else
+        et.G_Print("^1WARNING: Could not check IP " .. ip .. " against Scamalytics API.\n")
+        et.G_Print("^1Server admin should manually check this IP.\n")
     end
     
     -- Cache the result
@@ -93,8 +99,8 @@ function et_ClientConnect(clientNum, firstTime, isBot)
     -- Remove port number if present
     ip = ip:gsub(":%d+$", "")
     
-    -- Log connection attempt
-    et.G_Print("Client " .. clientNum .. " connecting from IP: " .. ip .. "\n")
+    local name = et.Info_ValueForKey(userinfo, "name")
+    et.G_Print("^2VPN CHECK: Client #" .. clientNum .. " (" .. name .. ") connecting from IP: " .. ip .. "\n")
     
     -- Skip check for localhost connections
     if is_localhost(ip) then

@@ -44,6 +44,21 @@ You can modify the following variables at the top of the script to customize its
 - Ensure your server has internet access to reach the Scamalytics API
 - Verify that your API key is valid and has sufficient quota for your server's traffic
 
+## Limitations
+
+ET:Legacy's Lua environment may have restrictions on executing external commands and making HTTP requests. Due to these limitations:
+
+1. The script logs IP addresses of connecting clients but may not be able to directly check them against the Scamalytics API
+2. Server administrators should monitor the log files for connection attempts and manually check suspicious IPs
+
+### Alternative Solutions
+
+If direct API checking doesn't work, consider these alternatives:
+
+1. **Manual IP Checking**: Review server logs and manually check suspicious IPs using the Scamalytics website
+2. **External Script**: Develop an external script that monitors log files and performs API checks outside of ET:Legacy
+3. **Server Plugin**: Create a native C/C++ ET:Legacy module that can make HTTP requests directly
+
 ## License
 
 This script is provided under the same license as ET:Legacy.
