@@ -40,7 +40,7 @@ local function check_vpn(ip)
     end
     
     -- Construct API URL
-    local url = "https://api.scamalytics.com/v2/ip/" .. ip .. "?key=" .. API_KEY
+    local url = "https://api11.scamalytics.com/v3/bahdgt/?key=" .. API_KEY .. "&ip=" .. ip
     
     et.G_Print("Making Scamalytics API call for IP: " .. ip .. "\n")
     et.G_Print("API URL: " .. url:gsub(API_KEY, API_KEY:sub(1, 8) .. "...") .. "\n")
