@@ -9,7 +9,7 @@
 ]]
 
 -- Configuration
-local API_KEY = "b7e5e2b26f85b0f8e9324d75ddd60c00f859e9e5ab70eb5d969fa01a25bea172" -- Set API key directly in the file
+local API_KEY = "YOUR_API_KEY_HERE" -- Replace with your actual Scamalytics API key
 local KICK_MESSAGE = "VPN not allowed"
 local CACHE_DURATION = 3600 -- Cache results for 1 hour (in seconds)
 
