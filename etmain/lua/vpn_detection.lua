@@ -7,7 +7,6 @@
  * Date: March 29, 2025
 ]]
 
-local API_KEY = "b7e5e2b26f85b0f8e9324d75ddd60c00f859e9e5ab70eb5d969fa01a25bea172"
 local KICK_MESSAGE = "VPN not allowed"
 local CACHE_DURATION = 3600 -- Cache results for 1 hour (in seconds)
 
@@ -16,6 +15,12 @@ local vpn_cache = {}
 function et_InitGame(levelTime, randomSeed, restart)
     et.RegisterModname("VPN Detection")
     et.G_Print("VPN Detection module loaded\n")
+    
+    local api_key = et.trap_Cvar_Get("vpn_api_key")
+    if not api_key or api_key == "" then
+        et.G_Print("^1ERROR: vpn_api_key cvar not set. VPN detection will not work!\n")
+        et.G_Print("^1Please set vpn_api_key in your server config: set vpn_api_key \"your_api_key_here\"\n")
+    end
 end
 
 local function is_localhost(ip)
@@ -23,13 +28,19 @@ local function is_localhost(ip)
 end
 
 local function check_vpn(ip)
+    local api_key = et.trap_Cvar_Get("vpn_api_key")
+    if not api_key or api_key == "" then
+        et.G_Print("^1ERROR: Cannot check VPN - vpn_api_key cvar not set\n")
+        return false
+    end
+    
     local current_time = os.time()
     
     if vpn_cache[ip] and (current_time - vpn_cache[ip].timestamp) < CACHE_DURATION then
         return vpn_cache[ip].is_vpn
     end
     
-    local url = "https://api.scamalytics.com/v2/ip/" .. ip .. "?key=" .. API_KEY
+    local url = "https://api.scamalytics.com/v2/ip/" .. ip .. "?key=" .. api_key
     
     local http_result = ""
     local file = io.popen("curl -s '" .. url .. "'")
@@ -71,6 +82,12 @@ function et_ClientConnect(clientNum, firstTime, isBot)
     
     if is_localhost(ip) then
         et.G_Print("Client " .. clientNum .. " is connecting from localhost, skipping VPN check\n")
+        return nil
+    end
+    
+    local api_key = et.trap_Cvar_Get("vpn_api_key")
+    if not api_key or api_key == "" then
+        et.G_Print("^1WARNING: Cannot check if client " .. clientNum .. " is using a VPN - vpn_api_key cvar not set\n")
         return nil
     end
     
